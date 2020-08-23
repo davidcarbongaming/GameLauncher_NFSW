@@ -226,9 +226,12 @@
 		{"carid": "corvettec7", "carname": "Chevrolet Corvette Stingray C7"},
 		{"carid": "f40", "carname": "Ferrari F40"},
 		{"carid": "fortwo", "carname": "Smart Fortwo"},
+		{"carid": "grancabrio", "carname": "Maserati GranCabrio"}
+		{"carid": "granturismos", "carname": "Maserati GranTurismo S"}
 		{"carid": "gt50067", "carname": "Shelby GT500 '67"},
 		{"carid": "huracan610", "carname": "Lamborghini Huracán LP610-4"},
 		{"carid": "mb190evo2", "carname": "Mercedes-Benz 190E 2.5-16 Evolution II"},
+		{"carid": "mcstradale", "carname": "Maserati GranTurismo MC Stradale"}
 		{"carid": "mustanggt05", "carname": "Ford Mustang GT (2005)"},
 		{"carid": "nsx92", "carname": "Honda NSX"},
 		{"carid": "one77", "carname": "Aston Martin One-77"},
