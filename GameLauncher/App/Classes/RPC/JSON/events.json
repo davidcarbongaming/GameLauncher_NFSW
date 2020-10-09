@@ -355,6 +355,7 @@
         {"id": "557","trackname": "Turnpike Dash","type": "gamemode_sprint"},
         {"id": "558","trackname": "Top Speed Test","type": "gamemode_sprint"},
         {"id": "559","trackname": "Handling Test","type": "gamemode_sprint"},
+        {"id": "560","trackname": "Explore the World","type": "gamemode_sprint"},
         {"id": "570","trackname": "Rosewood College","type": "gamemode_meetingplace"},
         {"id": "584","trackname": "Main Street Reverse","type": "gamemode_circuit"},
         {"id": "585","trackname": "Mason Street Reverse","type": "gamemode_sprint"},
