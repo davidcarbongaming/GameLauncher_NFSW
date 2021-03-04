@@ -265,13 +265,6 @@ namespace GameLauncher
                 }).Start();
             };
 
-            Log.Core("CORE: Checking permissions");
-            if (!FunctionStatus.HasWriteAccessToFolder(Directory.GetCurrentDirectory()))
-            {
-                Log.Error("CORE: Check Permission Failed.");
-                MessageBox.Show(null, "Failed to write the test file. Make sure you're running the launcher with administrative privileges.", "GameLauncher", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
             Log.Core("LAUNCHER: Checking InstallationDirectory: " + FileSettingsSave.GameInstallation);
             if (string.IsNullOrEmpty(FileSettingsSave.GameInstallation))
             {
@@ -363,17 +356,6 @@ namespace GameLauncher
                 mycursor.GetType().InvokeMember("handle", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetField, null, mycursor, new object[] { colorcursorhandle });
                 Cursor = mycursor;
                 File.Delete(temporaryFile);
-
-                //Windows Defender (Windows 10)
-                if (WindowsProductVersion.GetWindowsNumber() >= 10.0 && (FileSettingsSave.WindowsDefenderStatus == "Not Excluded" || FileSettingsSave.WindowsDefenderStatus == "Unknown"))
-                {
-                    Log.Core("WINDOWS DEFENDER: Windows 10 Detected! Running Exclusions for Core Folders");
-                    WindowsDefenderFirstRun();
-                }
-                else if (WindowsProductVersion.GetWindowsNumber() >= 10.0 && !string.IsNullOrEmpty(FileSettingsSave.WindowsDefenderStatus))
-                {
-                    Log.Core("WINDOWS DEFENDER: Found 'WindowsDefender' key! Its value is " + FileSettingsSave.WindowsDefenderStatus);
-                }
             }
 
             Log.Core("CORE: Loading ModManager Cache");
@@ -467,12 +449,6 @@ namespace GameLauncher
             ContextMenu.MenuItems.Add(new MenuItem("Add Server", AddServer_Click));
             ContextMenu.MenuItems.Add("-");
             ContextMenu.MenuItems.Add(new MenuItem("Close launcher", CloseBTN_Click));
-
-            Notification.ContextMenu = ContextMenu;
-            Notification.Icon = new Icon(Icon, Icon.Width, Icon.Height);
-            Notification.Text = "GameLauncher";
-            Notification.Visible = true;
-
             ContextMenu = null;
 
             MainEmail.Text = FileAccountSave.UserRawEmail;
@@ -485,7 +461,6 @@ namespace GameLauncher
 
             /* Server Display List */
             ServerPick.DisplayMember = "Name";
-            Log.Core("LAUNCHER: Setting server list");
             ServerPick.DataSource = ServerListUpdater.CleanList;
 
             //ForceSelectServer
@@ -594,28 +569,6 @@ namespace GameLauncher
 
                     MessageBox.Show(null, string.Format("Drive {0} was not found. Your actual installation directory is set to {1} now.", drive, newdir), "GameLauncher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-            }
-
-            Log.Core("CORE: Setting Registry Options");
-            try
-            {
-                var gameInstallDirValue = Registry.GetValue("HKEY_LOCAL_MACHINE\\software\\Electronic Arts\\Need For Speed World", "GameInstallDir", RegistryValueKind.String);
-                if (gameInstallDirValue == null || gameInstallDirValue.ToString() != Path.GetFullPath(FileSettingsSave.GameInstallation))
-                {
-                    try
-                    {
-                        Registry.SetValue("HKEY_LOCAL_MACHINE\\software\\Electronic Arts\\Need For Speed World", "GameInstallDir", Path.GetFullPath(FileSettingsSave.GameInstallation));
-                        Registry.SetValue("HKEY_LOCAL_MACHINE\\software\\Electronic Arts\\Need For Speed World", "LaunchInstallDir", Path.GetFullPath(Application.ExecutablePath));
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(ex.Message);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.Message);
             }
 
             Log.Core("DISCORD: Initializing DiscordRPC");
@@ -836,9 +789,7 @@ namespace GameLauncher
                 if (!(ServerPick.SelectedItem is ServerList server)) return;
                 FileAccountSave.ChoosenGameServer = server.IpAddress;
             }
-            catch
-            {
-            }
+            catch { }
 
             if (String.IsNullOrEmpty(Tokens.Error))
             {
@@ -896,8 +847,6 @@ namespace GameLauncher
         {
             MainEmailBorder.Image = Theming.BorderEmail;
             MainPasswordBorder.Image = Theming.BorderPassword;
-
-            //ServerStatusBar(_colorLoading, _startPoint, _endPoint);
 
             _serverInfo = (ServerList)ServerPick.SelectedItem;
             _realServername = _serverInfo.Name;
@@ -969,8 +918,6 @@ namespace GameLauncher
 
                 if (e2.Cancelled)
                 {
-                    //ServerStatusBar(_colorOffline, _startPoint, _endPoint);
-
                     ServerStatusText.Text = "Server Status:\n - Offline ( OFF )";
                     ServerStatusText.ForeColor = Theming.Error;
                     ServerStatusDesc.Text = "Failed to connect to server.";
@@ -1264,8 +1211,6 @@ namespace GameLauncher
                         }
 
                         _allowRegistration = true;
-
-                        //ServerStatusBar(_colorOnline, _startPoint, _endPoint);
                     }
 
                     try
@@ -1285,63 +1230,75 @@ namespace GameLauncher
                             DisableSocialPanelandClearIt();
                         }
                     }
-                    catch
-                    {
-                        //¯\_(ツ)_/¯
-                    }
+                    catch { }
 
                     if (!DetectLinux.LinuxDetected())
                     {
-                        ServerPingStatusText.ForeColor = Theming.FivithTextForeColor;
+                        try
+                        {
+                            ServerPingStatusText.ForeColor = Theming.FivithTextForeColor;
 
-                        Ping pingSender = new Ping();
-                        pingSender.SendAsync(stringToUri.Host, 1000, new byte[1], new PingOptions(64, true), new AutoResetEvent(false));
-                        pingSender.PingCompleted += (sender3, e3) => {
-                            PingReply reply = e3.Reply;
+                            Ping pingSender = new Ping();
+                            pingSender.SendAsync(stringToUri.Host, 1000, new byte[1], new PingOptions(64, true), new AutoResetEvent(false));
+                            pingSender.PingCompleted += (sender3, e3) => {
+                                PingReply reply = e3.Reply;
 
-                            if (reply.Status == IPStatus.Success && _realServername != "Offline Built-In Server")
-                            {
-                                if (this.ServerPingStatusText.InvokeRequired)
+                                if (reply.Status == IPStatus.Success && _realServername != "Offline Built-In Server")
                                 {
-                                    ServerStatusDesc.Invoke(new Action(delegate () {
-                                        ServerPingStatusText.Text = string.Format("Your Ping to the Server \n{0}".ToUpper(), reply.RoundtripTime + "ms");
-                                    }));
+                                    if (this.ServerPingStatusText.InvokeRequired)
+                                    {
+                                        ServerStatusDesc.Invoke(new Action(delegate () {
+                                            ServerPingStatusText.Text = string.Format("Your Ping to the Server \n{0}".ToUpper(), reply.RoundtripTime + "ms");
+                                        }));
+                                    }
+                                    else
+                                    {
+                                        this.ServerPingStatusText.Text = string.Format("Your Ping to the Server \n{0}".ToUpper(), reply.RoundtripTime + "ms");
+                                    }
                                 }
                                 else
                                 {
-                                    this.ServerPingStatusText.Text = string.Format("Your Ping to the Server \n{0}".ToUpper(), reply.RoundtripTime + "ms");
+                                    this.ServerPingStatusText.Text = string.Format("");
                                 }
-                            }
-                            else
-                            {
-                                this.ServerPingStatusText.Text = string.Format("");
-                            }
-                        };
+                            };
+                        }
+                        catch 
+                        {
+                            this.ServerPingStatusText.Text = string.Format("");
+                        }
                     }
                     else
                     {
                         this.ServerPingStatusText.Text = string.Format("");
                     }
 
-                    //for thread safety
-                    if (this.ServerStatusDesc.InvokeRequired)
+                    try
                     {
-                        ServerStatusDesc.Invoke(new Action(delegate ()
+                        //for thread safety
+                        if (this.ServerStatusDesc.InvokeRequired)
                         {
-                            ServerStatusDesc.Text = string.Format("Online: {0}\nRegistered: {1}", numPlayers, numRegistered);
-                        }));
+                            ServerStatusDesc.Invoke(new Action(delegate ()
+                            {
+                                ServerStatusDesc.Text = string.Format("Online: {0}\nRegistered: {1}", numPlayers, numRegistered);
+                            }));
+                        }
+                        else
+                        {
+                            this.ServerStatusDesc.Text = string.Format("Online: {0}\nRegistered: {1}", numPlayers, numRegistered);
+                        }
                     }
-                    else
-                    {
-                        this.ServerStatusDesc.Text = string.Format("Online: {0}\nRegistered: {1}", numPlayers, numRegistered);
-                    }
+                    catch { }
 
                     _serverEnabled = true;
 
                     if (!Directory.Exists(".BannerCache")) { Directory.CreateDirectory(".BannerCache"); }
                     if (!string.IsNullOrEmpty(verticalImageUrl))
                     {
+                        try
+                        {
 
+                        }
+                        catch { }
                         WebClient client2 = new WebClient();
                         Uri stringToUri3 = new Uri(verticalImageUrl);
                         client2.DownloadDataAsync(stringToUri3);
@@ -1738,15 +1695,6 @@ namespace GameLauncher
             RegisterCancel.BackgroundImage = Theming.GrayButtonHover;
         }
 
-        public void DrawErrorAroundTextBox(TextBox x)
-        {
-            x.BorderStyle = BorderStyle.FixedSingle;
-            var p = new Pen(Color.Red);
-            var g = CreateGraphics();
-            var variance = 1;
-            g.DrawRectangle(p, new Rectangle(x.Location.X - variance, x.Location.Y - variance, x.Width + variance, x.Height + variance));
-        }
-
         private void RegisterButton_Click(object sender, EventArgs e)
         {
             Refresh();
@@ -2092,16 +2040,6 @@ namespace GameLauncher
             System.Timers.Timer shutdowntimer = new System.Timers.Timer();
             shutdowntimer.Elapsed += (x2, y2) =>
             {
-                if (secondsToShutDown == 300)
-                {
-                    Notification.Visible = true;
-                    Notification.BalloonTipIcon = ToolTipIcon.Info;
-                    Notification.BalloonTipTitle = "SpeedBug Fix - " + _realServername;
-                    Notification.BalloonTipText = "Game is going to shut down in 5 minutes. Please restart it manually before the launcher does it.";
-                    Notification.ShowBalloonTip(5000);
-                    Notification.Dispose();
-                }
-
                 Process[] allOfThem = Process.GetProcessesByName("nfsw");
 
                 if (secondsToShutDown <= 0)
