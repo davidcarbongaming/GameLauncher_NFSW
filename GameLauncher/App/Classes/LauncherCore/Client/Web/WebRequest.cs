@@ -8,24 +8,15 @@ using GameLauncher.App.Classes.SystemPlatform.Components;
 using GameLauncher.App.Classes.LauncherCore.Global;
 using GameLauncher.App.Classes.Hash;
 using GameLauncher.App.Classes.SystemPlatform.Linux;
+using GameLauncher.App.Classes.LauncherCore.RPC;
 
 namespace GameLauncher.App.Classes.LauncherCore.Client.Web
 {
     public class WebClientWithTimeout : WebClient
     {
-        private static string GameLauncherHash = string.Empty;
+        private static string GameLauncherHash = SHA.HashFile(AppDomain.CurrentDomain.FriendlyName);
         private static long addrange = 0;
         private static int timeout = 3000;
-
-        public static string Value()
-        {
-            if (string.IsNullOrEmpty(GameLauncherHash))
-            {
-                GameLauncherHash = SHA.HashFile(AppDomain.CurrentDomain.FriendlyName);
-            }
-
-            return GameLauncherHash;
-        }
 
         protected override WebRequest GetWebRequest(Uri address)
         {
@@ -38,7 +29,7 @@ namespace GameLauncher.App.Classes.LauncherCore.Client.Web
                 }.Uri;
             }
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.ServerCertificateValidationCallback = (Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) => {
                 bool isOk = true;
@@ -71,8 +62,8 @@ namespace GameLauncher.App.Classes.LauncherCore.Client.Web
             request.UserAgent = "GameLauncher (+https://github.com/SoapBoxRaceWorld/GameLauncher_NFSW)";
             request.Headers["X-HWID"] = HardwareID.FingerPrint.Value();
             request.Headers["X-UserAgent"] = "GameLauncherReborn " + Application.ProductVersion + " WinForms (+https://github.com/SoapBoxRaceWorld/GameLauncher_NFSW)";
-            request.Headers["X-GameLauncherHash"] = Value();
-            request.Headers["X-DiscordID"] = FunctionStatus.DiscordUserID;
+            request.Headers["X-GameLauncherHash"] = GameLauncherHash;
+            request.Headers["X-DiscordID"] = DiscordLauncherPresense.UserID;
 
             if (addrange != 0)
             {

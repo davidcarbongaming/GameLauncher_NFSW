@@ -10,6 +10,7 @@ using GameLauncher.App.Classes.LauncherCore.Lists;
 using GameLauncher.App.Classes.LauncherCore.Lists.JSON;
 using GameLauncher.App.Classes.LauncherCore.ModNet;
 using GameLauncher.App.Classes.LauncherCore.Proxy;
+using GameLauncher.App.Classes.LauncherCore.RPC;
 using GameLauncher.App.Classes.LauncherCore.Visuals;
 using GameLauncher.App.Classes.Logger;
 using GameLauncher.App.Classes.SystemPlatform.Components;
@@ -515,6 +516,25 @@ namespace GameLauncher
                 }
             }
 
+            Log.Info("LAUNCHER: Detecting OS");
+            if (DetectLinux.LinuxDetected())
+            {
+                string OS = DetectLinux.Distro();
+                Log.System("SYSTEM: Detected OS: " + OS);
+            }
+            else
+            {
+                string OS = (string)Registry.LocalMachine.OpenSubKey("Software\\Microsoft\\Windows NT\\CurrentVersion").GetValue("productName");
+                Log.System("SYSTEM: Detected OS: " + OS);
+                if (Environment.Is64BitOperatingSystem == true)
+                {
+                    Log.Debug("SYSTEM: OS Type: 64 Bit");
+                }
+                Log.System("SYSTEM: OS Details: " + Environment.OSVersion);
+                Log.System("SYSTEM: Video Card: " + HardwareInfo.GPU.CardName());
+                Log.System("SYSTEM: Driver Version: " + HardwareInfo.GPU.DriverVersion());
+            }
+
             if (!string.IsNullOrEmpty(FileSettingsSave.GameInstallation))
             {
                 var linksPath = Path.Combine(FileSettingsSave.GameInstallation + "\\.links");
@@ -536,6 +556,8 @@ namespace GameLauncher
             {
                 _SplashScreen.Abort();
             }
+
+            DiscordLauncherPresense.Start("Start Up", "540651192179752970");
 
             Log.Visuals("CORE: Starting MainScreen");
             Application.Run(new MainScreen());

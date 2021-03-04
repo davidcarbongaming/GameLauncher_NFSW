@@ -13,9 +13,6 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
 {
     class DiscordGamePresence
     {
-        /* Default Discord ID */
-        public static string DiscordRPCID = "540651192179752970";
-
         public static RichPresence _presence = new RichPresence();
 
         //Some checks
@@ -49,14 +46,14 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
             String _serverDiscordLink = MainScreen.json.discordUrl;
             if (!String.IsNullOrEmpty(_serverWebsiteLink) || !String.IsNullOrEmpty(_serverDiscordLink) || !String.IsNullOrEmpty(_serverPanelLink))
             {
-                MainScreen.ButtonsList.Clear();
+                DiscordLauncherPresense.ButtonsList.Clear();
 
                 if (!String.IsNullOrEmpty(_serverPanelLink))
                 {
                     //Let's format it now, if possible
                     if (AntiCheat.persona_id == String.Empty || AntiCheat.persona_name == String.Empty)
                     {
-                        MainScreen.ButtonsList.Add(new DiscordButton()
+                        DiscordLauncherPresense.ButtonsList.Add(new DiscordButton()
                         {
                             Label = "View Panel",
                             Url = _serverPanelLink.Split(new string[] { "{sep}" }, StringSplitOptions.None)[0]
@@ -68,7 +65,7 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                         _serverPanelLink = _serverPanelLink.Replace("{personaname}", AntiCheat.persona_name);
                         _serverPanelLink = _serverPanelLink.Replace("{sep}", String.Empty);
 
-                        MainScreen.ButtonsList.Add(new DiscordButton()
+                        DiscordLauncherPresense.ButtonsList.Add(new DiscordButton()
                         {
                             Label = "Check " + AntiCheat.persona_name + " on Panel",
                             Url = _serverPanelLink
@@ -77,7 +74,7 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                 }
                 else if (!String.IsNullOrEmpty(_serverWebsiteLink) && _serverWebsiteLink != _serverDiscordLink)
                 {
-                    MainScreen.ButtonsList.Add(new DiscordButton()
+                    DiscordLauncherPresense.ButtonsList.Add(new DiscordButton()
                     {
                         Label = "Website",
                         Url = _serverWebsiteLink
@@ -86,7 +83,7 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
 
                 if (!String.IsNullOrEmpty(_serverDiscordLink))
                 {
-                    MainScreen.ButtonsList.Add(new DiscordButton()
+                    DiscordLauncherPresense.ButtonsList.Add(new DiscordButton()
                     {
                         Label = "Discord",
                         Url = _serverDiscordLink
@@ -124,9 +121,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = "Treasure Hunt - Day: " + TEDay,
                     SmallImageKey = "gamemode_treasure"
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
             }
 
 
@@ -211,9 +208,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = "In-Freeroam",
                     SmallImageKey = "gamemode_freeroam"
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
 
                 eventTerminatedManually = true;
                 FunctionStatus.CanCloseGame = true;
@@ -240,9 +237,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                         SmallImageText = EventsList.GetEventName(Convert.ToInt32(EventID)),
                         SmallImageKey = EventsList.GetEventType(Convert.ToInt32(EventID))
                     };
-                    _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                    _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                    if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                    if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
 
                     eventTerminatedManually = false;
                 }
@@ -259,9 +256,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = "In-Freeroam",
                     SmallImageKey = "gamemode_freeroam"
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
 
                 eventTerminatedManually = true;
             }
@@ -291,9 +288,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
 
                 _presence.Assets.LargeImageText = PersonaName + " - Level: " + PersonaLevel;
                 _presence.Assets.LargeImageKey = PersonaAvatarId;
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
             }
 
             //IN EVENT
@@ -312,9 +309,9 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = EventsList.GetEventName(EventID),
                     SmallImageKey = EventsList.GetEventType(EventID)
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
 
                 eventTerminatedManually = false;
             }
@@ -329,10 +326,10 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = EventsList.GetEventName(EventID),
                     SmallImageKey = EventsList.GetEventType(EventID)
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
                 AntiCheat.DisableChecks();
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
 
                 eventTerminatedManually = false;
             }
@@ -347,12 +344,12 @@ namespace GameLauncher.App.Classes.LauncherCore.RPC
                     SmallImageText = EventsList.GetEventName(EventID),
                     SmallImageKey = EventsList.GetEventType(EventID)
                 };
-                _presence.Buttons = MainScreen.ButtonsList.ToArray();
+                _presence.Buttons = DiscordLauncherPresense.ButtonsList.ToArray();
 
                 AntiCheat.event_id = EventID;
                 AntiCheat.EnableChecks();
 
-                if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+                if (DiscordLauncherPresense.Client != null) DiscordLauncherPresense.Client.SetPresence(_presence);
             }
 
             //CARS RELATED

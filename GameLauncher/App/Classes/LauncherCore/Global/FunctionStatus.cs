@@ -1,3 +1,4 @@
+using DiscordRPC;
 using System;
 using System.Globalization;
 using System.IO;
@@ -17,12 +18,8 @@ namespace GameLauncher.App.Classes.LauncherCore.Global
         /* System Language */
         public static string CurrentLanguage = "EN";
 
-        /* User's Discord ID */
-        public static string DiscordUserID = String.Empty;
-
         /* Sets Game Launchers User Agent (If Required) */
         public static string UserAgent = null;
-
 
         /* Verify Hash Status */
         public static bool IsVerifyHashDisabled = false;

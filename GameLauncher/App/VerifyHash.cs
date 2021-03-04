@@ -2,6 +2,7 @@ using DiscordRPC;
 using GameLauncher.App.Classes.Hash;
 using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
 using GameLauncher.App.Classes.LauncherCore.Global;
+using GameLauncher.App.Classes.LauncherCore.RPC;
 using GameLauncher.App.Classes.LauncherCore.Visuals;
 using GameLauncher.App.Classes.Logger;
 using GameLauncher.App.Classes.SystemPlatform.Linux;
@@ -105,14 +106,7 @@ namespace GameLauncher.App
 
         private void StartGameScanner()
         {
-            _presence.Details = "In-Launcher: " + Application.ProductVersion;
-            _presence.State = "Validating Game Files!";
-            _presence.Assets = new Assets
-            {
-                LargeImageText = "SBRW",
-                LargeImageKey = "nfsw"
-            };
-            if (MainScreen.discordRpcClient != null) MainScreen.discordRpcClient.SetPresence(_presence);
+            DiscordLauncherPresense.Status("Verify", null);
 
             Log.Info("VERIFY HASH: Checking and Deleting '.orig' Files");
 
