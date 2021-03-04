@@ -2887,60 +2887,6 @@ namespace GameLauncher
                 // ignored
             }
 
-            //Windows Firewall Runner
-            if (!string.IsNullOrEmpty(FileSettingsSave.FirewallGameStatus))
-            {
-                if (FirewallManager.IsServiceRunning == true && FirewallHelper.FirewallStatus() == true)
-                {
-                    bool removeFirewallRule = false;
-                    bool firstTimeRun = false;
-
-                    string nameOfGame = "SBRW - Game";
-                    string localOfGame = FileSettingsSave.GameInstallation + "\\nfsw.exe";
-
-                    string groupKeyGame = "Need for Speed: World";
-                    string descriptionGame = groupKeyGame;
-
-                    if (FileSettingsSave.FirewallGameStatus == "Not Excluded" || FileSettingsSave.FirewallGameStatus == "Turned Off" || FileSettingsSave.FirewallGameStatus == "Service Stopped" || FileSettingsSave.FirewallGameStatus == "Unknown")
-                    {
-                        firstTimeRun = true;
-                        FileSettingsSave.FirewallGameStatus = "Excluded";
-                    }
-                    else if (FileSettingsSave.FirewallGameStatus == "Reset")
-                    {
-                        removeFirewallRule = true;
-                        FileSettingsSave.FirewallGameStatus = "Not Excluded";
-                    }
-
-                    //Inbound & Outbound
-                    FirewallHelper.DoesRulesExist(removeFirewallRule, firstTimeRun, nameOfGame, localOfGame, groupKeyGame, descriptionGame, FirewallProtocol.Any);
-                }
-                else if (FirewallManager.IsServiceRunning == true && FirewallHelper.FirewallStatus() == false)
-                {
-                    FileSettingsSave.FirewallGameStatus = "Turned Off";
-                }
-                else
-                {
-                    FileSettingsSave.FirewallGameStatus = "Service Stopped";
-                }
-
-                /* Set Folder Permissions Here - DavidCarbon */
-                if (FileSettingsSave.FilePermissionStatus != "Set" && !DetectLinux.LinuxDetected())
-                {
-                    /* Launcher Folder */
-                    FileORFolderPermissions.CheckLauncherPerms("Folder", Path.Combine(AppDomain.CurrentDomain.BaseDirectory));
-                    /* Game Files Folder */
-                    FileORFolderPermissions.CheckLauncherPerms("Folder", Path.Combine(FileSettingsSave.GameInstallation));
-                    FileSettingsSave.FilePermissionStatus = "Set";
-                }
-                else
-                {
-                    Log.Core("PERMISSIONS: Checking File! It's value is " + FileSettingsSave.FilePermissionStatus);
-                }
-
-                FileSettingsSave.SaveSettings();
-            }
-
             PlayProgressText.Text = "Ready!".ToUpper();
             _presence.State = "Ready!";
             if (discordRpcClient != null) discordRpcClient.SetPresence(_presence);
@@ -3019,18 +2965,6 @@ namespace GameLauncher
             MessageBox.Show(message, header);
         }
 
-        public void ServerStatusBar(Pen color, Point startPoint, Point endPoint, int Thickness = 2)
-        {
-            Graphics _formGraphics = CreateGraphics();
-
-            for (int x = 0; x <= Thickness; x++)
-            {
-                _formGraphics.DrawLine(color, new Point(startPoint.X, startPoint.Y - x), new Point(endPoint.X, endPoint.Y - x));
-            }
-
-            _formGraphics.Dispose();
-        }
-
         private void SelectServerBtn_Click(object sender, EventArgs e)
         {
             new SelectServer().ShowDialog();
@@ -3066,38 +3000,6 @@ namespace GameLauncher
         {
             if (_serverTwitterLink != null)
                 Process.Start(_serverTwitterLink);
-        }
-        private void WindowsDefenderFirstRun()
-        {
-            if (ManagementSearcher.SecurityCenter("AntivirusEnabled") == true && ManagementSearcher.SecurityCenter("AntispywareEnabled") == true)
-            {
-                // Create Windows Defender Exclusion
-                try
-                {
-                    Log.Info("WINDOWS DEFENDER: Excluding Core Folders");
-                    //Add Exclusion to Windows Defender
-                    using (PowerShell ps = PowerShell.Create())
-                    {
-                        ps.AddScript($"Add-MpPreference -ExclusionPath \"{AppDomain.CurrentDomain.BaseDirectory}\"");
-                        ps.AddScript($"Add-MpPreference -ExclusionPath \"{FileSettingsSave.GameInstallation}\"");
-                        var result = ps.Invoke();
-                    }
-
-                    FileSettingsSave.WindowsDefenderStatus = "Excluded";
-                    FileSettingsSave.SaveSettings();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error("WINDOWS DEFENDER: " + ex.Message);
-                    FileSettingsSave.WindowsDefenderStatus = "Not Excluded";
-                    FileSettingsSave.SaveSettings();
-                }
-            }
-            else
-            {
-                FileSettingsSave.WindowsDefenderStatus = "Not Supported";
-                FileSettingsSave.SaveSettings();
-            }
         }
 
         private void CheckGameFilesDirectoryPrevention()
