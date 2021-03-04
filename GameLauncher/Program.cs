@@ -93,10 +93,7 @@ namespace GameLauncher
 
                         if (restartApp == DialogResult.Yes)
                         {
-                            Properties.Settings.Default.IsRestarting = true;
-                            Properties.Settings.Default.Save();
                             Application.Restart();
-
                         }
 
                         Process.GetProcessById(Process.GetCurrentProcess().Id).Kill();
@@ -328,13 +325,6 @@ namespace GameLauncher
             else
             {
                 Log.Build("BUILD: GameLauncher " + Application.ProductVersion);
-            }
-
-            if (Properties.Settings.Default.IsRestarting)
-            {
-                Properties.Settings.Default.IsRestarting = false;
-                Properties.Settings.Default.Save();
-                Thread.Sleep(3000);
             }
 
             Application.EnableVisualStyles();

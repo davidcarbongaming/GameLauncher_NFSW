@@ -187,11 +187,6 @@ namespace GameLauncher
 
             this.Shown += (x, y) =>
             {
-                if (UriScheme.ForceGame == true)
-                {
-                    PlayButton_Click(x, y);
-                }
-
                 new Thread(() =>
                 {
                     DiscordLauncherPresense.Update();
@@ -407,7 +402,7 @@ namespace GameLauncher
             ContextMenu = null;
 
             MainEmail.Text = FileAccountSave.UserRawEmail;
-            MainPassword.Text = Properties.Settings.Default.PasswordDecoded;
+            MainPassword.Text = FileAccountSave.UserRawPassword;
             if (!string.IsNullOrEmpty(FileAccountSave.UserRawEmail) && !string.IsNullOrEmpty(FileAccountSave.UserHashedPassword))
             {
                 Log.Core("LAUNCHER: Restoring last saved email and password");
@@ -697,18 +692,16 @@ namespace GameLauncher
             {
                 FileAccountSave.UserRawEmail = username;
                 FileAccountSave.UserHashedPassword = realpass;
+                FileAccountSave.UserRawPassword = MainPassword.Text.ToString();
                 FileAccountSave.SaveAccount();
-                Properties.Settings.Default.PasswordDecoded = MainPassword.Text.ToString();
             }
             else
             {
                 FileAccountSave.UserRawEmail = string.Empty;
                 FileAccountSave.UserHashedPassword = string.Empty;
+                FileAccountSave.UserRawPassword = string.Empty;
                 FileAccountSave.SaveAccount();
-                Properties.Settings.Default.PasswordDecoded = String.Empty;
             }
-
-            Properties.Settings.Default.Save();
 
             try
             {
@@ -826,7 +819,6 @@ namespace GameLauncher
             }
 
             WebClient client = new WebClient();
-            var artificialPingStart = Time.GetStamp();
             VerticalBanner.BackColor = Color.Transparent;
 
             var stringToUri = new Uri(serverIp + "/GetServerInformation");
@@ -1257,26 +1249,18 @@ namespace GameLauncher
                             {
                                 try
                                 {
-                                    if (UriScheme.ForceGame != true)
+                                    Image image;
+                                    var memoryStream = new MemoryStream(e4.Result);
+                                    image = Image.FromStream(memoryStream);
+
+                                    VerticalBanner.Image = image;
+                                    VerticalBanner.BackColor = Theming.VerticalBannerBackColor;
+
+                                    Console.WriteLine(VerticalBanners.GetFileExtension(verticalImageUrl));
+
+                                    if (VerticalBanners.GetFileExtension(verticalImageUrl) != "gif")
                                     {
-                                        Image image;
-                                        var memoryStream = new MemoryStream(e4.Result);
-                                        image = Image.FromStream(memoryStream);
-
-                                        VerticalBanner.Image = image;
-                                        VerticalBanner.BackColor = Theming.VerticalBannerBackColor;
-
-                                        Console.WriteLine(VerticalBanners.GetFileExtension(verticalImageUrl));
-
-                                        if (VerticalBanners.GetFileExtension(verticalImageUrl) != "gif")
-                                        {
-                                            File.WriteAllBytes(".BannerCache/" + SHA.HashPassword(FullServerNameBanner) + ".bin", memoryStream.ToArray());
-                                        }
-                                    }
-                                    else
-                                    {
-                                        VerticalBanner.Image = null;
-                                        VerticalBanner.BackColor = Theming.VerticalBannerBackColor;
+                                        File.WriteAllBytes(".BannerCache/" + SHA.HashPassword(FullServerNameBanner) + ".bin", memoryStream.ToArray());
                                     }
                                 }
                                 catch (Exception ex)
@@ -2024,8 +2008,6 @@ namespace GameLauncher
                             DialogResult restartApp = MessageBox.Show(null, errorMsg + "\nWould you like to restart the launcher?", "GameLauncher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                             if (restartApp == DialogResult.Yes)
                             {
-                                Properties.Settings.Default.IsRestarting = true;
-                                Properties.Settings.Default.Save();
                                 Application.Restart();
                                 Application.ExitThread();
                             }
@@ -2087,14 +2069,10 @@ namespace GameLauncher
             PlayButton.Visible = false;
             LogoutButton.Visible = false;
 
-            if (UriScheme.ForceGame != true)
+            if (_loggedIn == false)
             {
-                if (_loggedIn == false)
-                {
-                    if (_useSavedPassword == false) return;
-                    LoginButton_Click(sender, e);
-                }
-
+                if (_useSavedPassword == false) return;
+                LoginButton_Click(sender, e);
                 if (_playenabled == false)
                 {
                     return;
@@ -2488,17 +2466,7 @@ namespace GameLauncher
 
             TaskbarProgress.SetState(Handle, TaskbarProgress.TaskbarStates.Indeterminate);
 
-            //Guess who is Back - DavidCarbon
-            if (File.Exists(filename_pack) && !File.Exists(FileSettingsSave.GameInstallation + "/nfsw.exe"))
-            {
-                PlayProgressTextTimer.Visible = true;
-                PlayProgressText.Text = "Local GameFiles sbrwpack Found In Launcher Folder".ToUpper();
-                PlayProgressTextTimer.Text = "Loading".ToUpper();
-
-                //GameFiles.sbrwpack
-                LocalGameFiles();
-            }
-            else if (!File.Exists(FileSettingsSave.GameInstallation + "/nfsw.exe"))
+            if (!File.Exists(FileSettingsSave.GameInstallation + "/nfsw.exe"))
             {
                 _downloadStartTime = DateTime.Now;
                 PlayProgressTextTimer.Text = "Downloading: Core GameFiles".ToUpper();
@@ -2589,132 +2557,6 @@ namespace GameLauncher
                 PlayProgressTextTimer.Text = "";
                 Log.Info("DOWNLOAD: Game Files Download is Complete!");
             }
-        }
-
-        //Check Local GameFiles Hash
-        private async void LocalGameFiles()
-        {
-            await Task.Delay(5000);
-            if (SHA.HashFile("GameFiles.sbrwpack") == "88C886B6D131C052365C3D6D14E14F67A4E2C253")
-            {
-                TaskbarProgress.SetValue(Handle, 100, 100);
-                PlayProgress.Value = 100;
-                PlayProgress.Width = 519;
-
-                GoForUnpack(filename_pack);
-            }
-        }
-
-        //That's right the Protype Extractor from 2.1.5.x, now back from the dead - DavidCarbon
-        public void GoForUnpack(string filename_pack)
-        {
-            //Thread.Sleep(1);
-
-            Thread unpacker = new Thread(() => {
-                this.BeginInvoke((MethodInvoker)delegate {
-                    using (ZipArchive archive = ZipFile.OpenRead(filename_pack))
-                    {
-                        int numFiles = archive.Entries.Count;
-                        int current = 1;
-
-                        foreach (ZipArchiveEntry entry in archive.Entries)
-                        {
-                            string fullName = entry.FullName;
-
-                            ExtractingProgress.Value = (int)((long)100 * current / numFiles);
-                            ExtractingProgress.Width = (int)((long)519 * current / numFiles);
-
-                            TaskbarProgress.SetValue(Handle, (int)(100 * current / numFiles), 100);
-
-                            if (!File.Exists(Path.Combine(FileSettingsSave.GameInstallation, fullName.Replace(".sbrw", String.Empty))))
-                            {
-                                PlayProgressText.Text = ("Unpacking " + fullName.Replace(".sbrw", String.Empty)).ToUpper();
-                                PlayProgressTextTimer.Text = "[" + current + " / " + archive.Entries.Count + "]";
-
-
-                                if (fullName.Substring(fullName.Length - 1) == "/")
-                                {
-                                    //Is a directory, create it!
-                                    string folderName = fullName.Remove(fullName.Length - 1);
-                                    if (Directory.Exists(Path.Combine(FileSettingsSave.GameInstallation, folderName)))
-                                    {
-                                        Directory.Delete(Path.Combine(FileSettingsSave.GameInstallation, folderName), true);
-                                    }
-
-                                    Directory.CreateDirectory(Path.Combine(FileSettingsSave.GameInstallation, folderName));
-                                }
-                                else
-                                {
-                                    String oldFileName = fullName.Replace(".sbrw", String.Empty);
-                                    String[] split = oldFileName.Split('/');
-
-                                    String newFileName = String.Empty;
-
-                                    if (split.Length >= 2)
-                                    {
-                                        newFileName = Path.Combine(split[split.Length - 2], split[split.Length - 1]);
-                                    }
-                                    else
-                                    {
-                                        newFileName = split.Last();
-                                    }
-
-                                    String KEY = Regex.Replace(SHA.HashPassword(newFileName), "[^0-9.]", "").Substring(0, 8);
-                                    String IV = Regex.Replace(MDFive.HashPassword(newFileName), "[^0-9.]", "").Substring(0, 8);
-
-                                    entry.ExtractToFile(getTempNa, true);
-
-                                    DESCryptoServiceProvider dESCryptoServiceProvider = new DESCryptoServiceProvider()
-                                    {
-                                        Key = Encoding.ASCII.GetBytes(KEY),
-                                        IV = Encoding.ASCII.GetBytes(IV)
-                                    };
-
-                                    FileStream fileStream = new FileStream(Path.Combine(FileSettingsSave.GameInstallation, oldFileName), FileMode.Create);
-                                    CryptoStream cryptoStream = new CryptoStream(fileStream, dESCryptoServiceProvider.CreateDecryptor(), CryptoStreamMode.Write);
-                                    BinaryWriter binaryFile = new BinaryWriter(cryptoStream);
-
-                                    using (BinaryReader reader = new BinaryReader(File.Open(getTempNa, FileMode.Open)))
-                                    {
-                                        long numBytes = new FileInfo(getTempNa).Length;
-                                        binaryFile.Write(reader.ReadBytes((int)numBytes));
-                                        binaryFile.Close();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                PlayProgressText.Text = ("Skipping " + fullName).ToUpper();
-                            }
-
-                            string Status = "Unpacking game: " + (100 * current / numFiles) + "%";
-                            DiscordLauncherPresense.Status("Unpack Game Files", Status);
-
-                            Application.DoEvents();
-
-                            if (numFiles == current)
-                            {
-                                PlayProgressTextTimer.Visible = false;
-                                PlayProgressTextTimer.Text = "";
-
-                                _isDownloading = false;
-                                OnDownloadFinished();
-
-                                Notification.Visible = true;
-                                Notification.BalloonTipIcon = ToolTipIcon.Info;
-                                Notification.BalloonTipTitle = "SBRW Launcher";
-                                Notification.BalloonTipText = "Your game is now ready to launch!";
-                                Notification.ShowBalloonTip(5000);
-                                Notification.Dispose();
-                            }
-
-                            current++;
-                        }
-                    }
-                });
-            });
-
-            unpacker.Start();
         }
 
         private void OnDownloadProgress(long downloadLength, long downloadCurrent, long compressedLength, string filename, int skiptime = 0)
