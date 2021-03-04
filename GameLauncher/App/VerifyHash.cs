@@ -1,4 +1,10 @@
 using DiscordRPC;
+using GameLauncher.App.Classes.Hash;
+using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
+using GameLauncher.App.Classes.LauncherCore.Global;
+using GameLauncher.App.Classes.LauncherCore.Visuals;
+using GameLauncher.App.Classes.Logger;
+using GameLauncher.App.Classes.SystemPlatform.Linux;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,12 +13,6 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using GameLauncher.App.Classes.Logger;
-using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
-using GameLauncher.App.Classes.LauncherCore.Visuals;
-using GameLauncher.App.Classes.LauncherCore.Global;
-using GameLauncher.App.Classes.Hash;
-using GameLauncher.App.Classes.SystemPlatform.Linux;
 
 namespace GameLauncher.App
 {

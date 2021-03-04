@@ -1,33 +1,31 @@
+using CommandLine;
+using GameLauncher.App.Classes;
+using GameLauncher.App.Classes.InsiderKit;
+using GameLauncher.App.Classes.LauncherCore.APICheckers;
+using GameLauncher.App.Classes.LauncherCore.Client;
+using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
+using GameLauncher.App.Classes.LauncherCore.Global;
+using GameLauncher.App.Classes.LauncherCore.LauncherUpdater;
+using GameLauncher.App.Classes.LauncherCore.Lists;
+using GameLauncher.App.Classes.LauncherCore.Lists.JSON;
+using GameLauncher.App.Classes.LauncherCore.ModNet;
+using GameLauncher.App.Classes.LauncherCore.Proxy;
+using GameLauncher.App.Classes.LauncherCore.Visuals;
+using GameLauncher.App.Classes.Logger;
+using GameLauncher.App.Classes.SystemPlatform.Components;
+using GameLauncher.App.Classes.SystemPlatform.Linux;
+using GameLauncher.App.Classes.SystemPlatform.Windows;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Win32;
-using CommandLine;
-using System.Globalization;
-using System.Reflection;
-using WindowsFirewallHelper;
-using Newtonsoft.Json;
-using GameLauncher.App.Classes;
-using GameLauncher.App.Classes.Logger;
-using GameLauncher.App.Classes.InsiderKit;
-using GameLauncher.App.Classes.LauncherCore.ModNet;
-using GameLauncher.App.Classes.SystemPlatform.Windows;
-using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
-using GameLauncher.App.Classes.LauncherCore.APICheckers;
-using GameLauncher.App.Classes.LauncherCore.Visuals;
-using GameLauncher.App.Classes.LauncherCore.Global;
-using GameLauncher.App.Classes.SystemPlatform.Components;
-using GameLauncher.App.Classes.LauncherCore.Lists.JSON;
-using GameLauncher.App.Classes.LauncherCore.Client;
-using GameLauncher.App.Classes.LauncherCore.Proxy;
-using GameLauncher.App.Classes.SystemPlatform.Linux;
-using GameLauncher.App.Classes.LauncherCore.Lists;
-using GameLauncher.App.Classes.LauncherCore.LauncherUpdater;
 
 namespace GameLauncher
 {
@@ -56,6 +54,10 @@ namespace GameLauncher
         {
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
+            if (DetectLinux.LinuxDetected())
+            {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            }
         }
 
         private static void Main2(Arguments args)
@@ -318,15 +320,6 @@ namespace GameLauncher
             Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("en-US");
             Thread.CurrentThread.CurrentUICulture = CultureInfo.CreateSpecificCulture("en-US");
 
-            if (UriScheme.IsCommandLineArgumentsInstalled())
-            {
-                UriScheme.InstallCommandLineArguments(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), AppDomain.CurrentDomain.FriendlyName));
-                if (args.Parse != null)
-                {
-                    new UriScheme(args.Parse);
-                }
-            }
-
             if (EnableInsider.ShouldIBeAnInsider() == true)
             {
                 Log.Build("INSIDER: GameLauncher " + Application.ProductVersion + "_" + EnableInsider.BuildNumber());
@@ -341,50 +334,6 @@ namespace GameLauncher
                 Properties.Settings.Default.IsRestarting = false;
                 Properties.Settings.Default.Save();
                 Thread.Sleep(3000);
-            }
-
-            //Windows Firewall Runner
-            if (!string.IsNullOrEmpty(FileSettingsSave.FirewallLauncherStatus))
-            {
-                if (FirewallManager.IsServiceRunning == true && FirewallHelper.FirewallStatus() == true)
-                {
-                    string nameOfLauncher = "SBRW - Game Launcher";
-                    string localOfLauncher = Assembly.GetEntryAssembly().Location;
-
-                    string nameOfUpdater = "SBRW - Game Launcher Updater";
-                    string localOfUpdater = Path.Combine(AppDomain.CurrentDomain.BaseDirectory + "GameLauncherUpdater.exe");
-
-                    string groupKeyLauncher = "Game Launcher for Windows";
-                    string descriptionLauncher = "Soapbox Race World";
-
-                    bool removeFirewallRule = false;
-                    bool firstTimeRun = false;
-
-                    if (FileSettingsSave.FirewallLauncherStatus == "Not Excluded" || FileSettingsSave.FirewallLauncherStatus == "Turned Off" || FileSettingsSave.FirewallLauncherStatus == "Service Stopped" || FileSettingsSave.FirewallLauncherStatus == "Unknown")
-                    {
-                        firstTimeRun = true;
-                        FileSettingsSave.FirewallLauncherStatus = "Excluded";
-                    }
-                    else if (FileSettingsSave.FirewallLauncherStatus == "Reset")
-                    {
-                        removeFirewallRule = true;
-                        FileSettingsSave.FirewallLauncherStatus = "Not Excluded";
-                    }
-
-                    //Inbound & Outbound
-                    FirewallHelper.DoesRulesExist(removeFirewallRule, firstTimeRun, nameOfLauncher, localOfLauncher, groupKeyLauncher, descriptionLauncher, FirewallProtocol.Any);
-                    FirewallHelper.DoesRulesExist(removeFirewallRule, firstTimeRun, nameOfUpdater, localOfUpdater, groupKeyLauncher, descriptionLauncher, FirewallProtocol.Any);
-                }
-                else if (FirewallManager.IsServiceRunning == true && FirewallHelper.FirewallStatus() == false)
-                {
-                    FileSettingsSave.FirewallLauncherStatus = "Turned Off";
-                }
-                else
-                {
-                    FileSettingsSave.FirewallLauncherStatus = "Service Stopped";
-                }
-
-                FileSettingsSave.SaveSettings();
             }
 
             Application.EnableVisualStyles();
@@ -419,11 +368,6 @@ namespace GameLauncher
                         MessageBox.Show(null, constructMsg, "GameLauncher", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         Environment.Exit(0);
                         break;
-                }
-
-                if (!FunctionStatus.HasWriteAccessToFolder(Path.GetDirectoryName(Application.ExecutablePath)))
-                {
-                    MessageBox.Show("This application requires admin priviledge");
                 }
 
                 //Update this text file if a new GameLauncherUpdater.exe has been delployed - DavidCarbon
@@ -471,126 +415,6 @@ namespace GameLauncher
                 }
             }
 
-            if (!DetectLinux.LinuxDetected())
-            {
-                //Windows 7 Fix
-                if (WindowsProductVersion.GetWindowsNumber() == 6.1 && (string.IsNullOrEmpty(FileSettingsSave.Win7UpdatePatches)))
-                {
-                    if (ManagementSearcher.GetInstalledHotFix("KB3020369") == false || ManagementSearcher.GetInstalledHotFix("KB3125574") == false)
-                    {
-                        String messageBoxPopupKB = String.Empty;
-                        messageBoxPopupKB = "Hey Windows 7 User, we've detected a potential issue of some missing Updates that are required.\n";
-                        messageBoxPopupKB += "We found that these Windows Update packages are showing as not installed:\n\n";
-
-                        if (ManagementSearcher.GetInstalledHotFix("KB3020369") == false) messageBoxPopupKB += "- Update KB3020369\n";
-                        if (ManagementSearcher.GetInstalledHotFix("KB3125574") == false) messageBoxPopupKB += "- Update KB3125574\n";
-
-                        messageBoxPopupKB += "\nAditionally, we must add a value to the registry:\n";
-
-                        messageBoxPopupKB += "- HKLM/SYSTEM/CurrentControlSet/Control/SecurityProviders\n/SCHANNEL/Protocols/TLS 1.2/Client\n";
-                        messageBoxPopupKB += "- Value: DisabledByDefault -> 0\n\n";
-
-                        messageBoxPopupKB += "Would you like to add those values?";
-                        DialogResult replyPatchWin7 = MessageBox.Show(null, messageBoxPopupKB, "SBRW Launcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-                        if (replyPatchWin7 == DialogResult.Yes)
-                        {
-                            RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client");
-                            key.SetValue("DisabledByDefault", 0x0);
-
-                            MessageBox.Show(null, "Registry option set, Remember that the changes may require a system reboot to take effect", "SBRW Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            FileSettingsSave.Win7UpdatePatches = "1";
-                        }
-                        else
-                        {
-                            MessageBox.Show(null, "Roger that, There may be some issues connecting to the servers.", "SBRW Launcher", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            FileSettingsSave.Win7UpdatePatches = "0";
-                        }
-
-                        FileSettingsSave.SaveSettings();
-                    }
-                }
-
-                if (!RedistributablePackage.IsInstalled(RedistributablePackageVersion.VC2015to2019x86))
-                {
-                    var result = MessageBox.Show(
-                        "You do not have the 32-bit 2015-2019 VC++ Redistributable Package installed.\n \nThis will install in the Background\n \nThis may restart your computer. \n \nClick OK to install it.",
-                        "Compatibility",
-                        MessageBoxButtons.OKCancel,
-                        MessageBoxIcon.Warning);
-
-                    if (result != DialogResult.OK)
-                    {
-                        MessageBox.Show("The game will not be started.", "Compatibility", MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                        return;
-                    }
-
-                    var wc = new WebClient();
-                    wc.DownloadFile("https://aka.ms/vs/16/release/VC_redist.x86.exe", "VC_redist.x86.exe");
-                    var proc = Process.Start(new ProcessStartInfo
-                    {
-                        Verb = "runas",
-                        Arguments = "/quiet",
-                        FileName = "VC_redist.x86.exe"
-                    });
-
-                    if (proc == null)
-                    {
-                        MessageBox.Show("Failed to run package installer. The game will not be started.", "Compatibility", MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-
-                if (Environment.Is64BitOperatingSystem == true)
-                {
-                    if (!RedistributablePackage.IsInstalled(RedistributablePackageVersion.VC2015to2019x64))
-                    {
-                        var result = MessageBox.Show(
-                            "You do not have the 64-bit 2015-2019 VC++ Redistributable Package installed.\n \nThis will install in the Background\n \nThis may restart your computer. \n \nClick OK to install it.",
-                            "Compatibility",
-                            MessageBoxButtons.OKCancel,
-                            MessageBoxIcon.Warning);
-
-                        if (result != DialogResult.OK)
-                        {
-                            MessageBox.Show("The game will not be started.", "Compatibility", MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                            return;
-                        }
-
-                        var wc = new WebClient();
-                        wc.DownloadFile("https://aka.ms/vs/16/release/VC_redist.x64.exe", "VC_redist.x64.exe");
-                        var proc = Process.Start(new ProcessStartInfo
-                        {
-                            Verb = "runas",
-                            Arguments = "/quiet",
-                            FileName = "VC_redist.x64.exe"
-                        });
-
-                        if (proc == null)
-                        {
-                            MessageBox.Show("Failed to run package installer. The game will not be started.", "Compatibility", MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            Console.WriteLine("Application path: " + Path.GetDirectoryName(Application.ExecutablePath));
-
-            if (!string.IsNullOrEmpty(FileSettingsSave.GameInstallation))
-            {
-                if (!FunctionStatus.HasWriteAccessToFolder(FileSettingsSave.GameInstallation))
-                {
-                    MessageBox.Show("This application requires admin priviledge. Restarting...");
-                }
-            }
-
-            //StaticConfiguration.DisableErrorTraces = false;
-
             if (!File.Exists("servers.json"))
             {
                 try
@@ -598,13 +422,6 @@ namespace GameLauncher
                     File.WriteAllText("servers.json", "[]");
                 }
                 catch { /* ignored */ }
-            }
-
-            if (Properties.Settings.Default.IsRestarting)
-            {
-                Properties.Settings.Default.IsRestarting = false;
-                Properties.Settings.Default.Save();
-                Thread.Sleep(3000);
             }
 
             Theming.CheckIfThemeExists();
@@ -619,8 +436,7 @@ namespace GameLauncher
                     MessageBox.Show("Good Luck... \n No Really \n ...Good Luck", "GameLauncher Will Continue, When It Failed To Connect To API");
                     Log.Warning("PRE-CHECK: User has Bypassed 'No Internet Connection' Check and Will Continue");
                 }
-
-                if (restartAppNoApis == DialogResult.Yes)
+                else if (restartAppNoApis == DialogResult.Yes)
                 {
                     /* Close Splash Screen (Just in Case) */
                     if (IsSplashScreenLive == true)
@@ -716,7 +532,7 @@ namespace GameLauncher
             }
 
             /* Close Splash Screen */
-            if (IsSplashScreenLive == true)
+            if (IsSplashScreenLive == true && FunctionStatus.ServerListStatus == "Loaded")
             {
                 _SplashScreen.Abort();
             }

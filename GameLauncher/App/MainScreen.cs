@@ -1,52 +1,52 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using System.Windows.Forms;
-using System.Net;
-using System.Security.Cryptography;
-using System.IO;
-using System.Xml;
-using System.Diagnostics;
-using System.Threading;
-using System.Reflection;
-using System.Net.NetworkInformation;
-using Newtonsoft.Json;
-using Microsoft.Win32;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.IO.Compression;
 using DiscordRPC;
-using Microsoft.WindowsAPICodePack.Dialogs;
-using System.Threading.Tasks;
-using System.Management.Automation;
-using WindowsFirewallHelper;
-using DiscordButton = DiscordRPC.Button;
 using GameLauncher.App;
 using GameLauncher.App.Classes;
 using GameLauncher.App.Classes.Auth;
-using GameLauncher.App.Classes.Logger;
-using GameLauncher.App.Classes.InsiderKit;
-using GameLauncher.App.Classes.LauncherCore.ModNet;
-using GameLauncher.App.Classes.SystemPlatform.Windows;
-using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
-using GameLauncher.App.Classes.LauncherCore.APICheckers;
-using GameLauncher.App.Classes.LauncherCore.Visuals;
-using GameLauncher.App.Classes.LauncherCore.Validator.JSON;
-using GameLauncher.App.Classes.LauncherCore.Validator.Email;
-using GameLauncher.App.Classes.LauncherCore.Global;
-using GameLauncher.App.Classes.SystemPlatform.Components;
-using GameLauncher.App.Classes.LauncherCore.Lists.JSON;
-using GameLauncher.App.Classes.LauncherCore.Client;
-using GameLauncher.App.Classes.LauncherCore.Downloader;
-using GameLauncher.App.Classes.LauncherCore.Proxy;
 using GameLauncher.App.Classes.Hash;
-using GameLauncher.App.Classes.LauncherCore.RPC;
-using GameLauncher.App.Classes.SystemPlatform.Linux;
-using GameLauncher.App.Classes.LauncherCore.Lists;
-using GameLauncher.App.Classes.SystemPlatform;
-using GameLauncher.App.Classes.LauncherCore.LauncherUpdater;
+using GameLauncher.App.Classes.InsiderKit;
+using GameLauncher.App.Classes.LauncherCore.APICheckers;
+using GameLauncher.App.Classes.LauncherCore.Client;
 using GameLauncher.App.Classes.LauncherCore.Client.Web;
+using GameLauncher.App.Classes.LauncherCore.Downloader;
+using GameLauncher.App.Classes.LauncherCore.FileReadWrite;
+using GameLauncher.App.Classes.LauncherCore.Global;
+using GameLauncher.App.Classes.LauncherCore.LauncherUpdater;
+using GameLauncher.App.Classes.LauncherCore.Lists;
+using GameLauncher.App.Classes.LauncherCore.Lists.JSON;
+using GameLauncher.App.Classes.LauncherCore.ModNet;
+using GameLauncher.App.Classes.LauncherCore.Proxy;
+using GameLauncher.App.Classes.LauncherCore.RPC;
+using GameLauncher.App.Classes.LauncherCore.Validator.Email;
+using GameLauncher.App.Classes.LauncherCore.Validator.JSON;
+using GameLauncher.App.Classes.LauncherCore.Visuals;
+using GameLauncher.App.Classes.Logger;
+using GameLauncher.App.Classes.SystemPlatform;
+using GameLauncher.App.Classes.SystemPlatform.Components;
+using GameLauncher.App.Classes.SystemPlatform.Linux;
+using GameLauncher.App.Classes.SystemPlatform.Windows;
+using Microsoft.Win32;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Management.Automation;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Xml;
+using WindowsFirewallHelper;
+using DiscordButton = DiscordRPC.Button;
 
 namespace GameLauncher
 {
@@ -184,11 +184,6 @@ namespace GameLauncher
             };
 
             discordRpcClient.Initialize();
-
-            if (DetectLinux.LinuxDetected())
-            {
-                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
-            }
 
             Log.Info("LAUNCHER: Detecting OS");
             if (DetectLinux.LinuxDetected())
@@ -585,16 +580,6 @@ namespace GameLauncher
                 LoginButton.ForeColor = Theming.SixTextForeColor;
             }
 
-            /* Fix this at a later date - DavidCarbon */
-            /*
-            Log.Core("LAUNCHER: Setting game language");
-
-            if (_settingFile.KeyExists("Language"))
-            {
-                SettingsLanguage.SelectedValue = _settingFile.Read("Language");
-            }
-            */
-
             Log.Core("LAUNCHER: Re-checking InstallationDirectory: " + FileSettingsSave.GameInstallation);
 
             var drive = Path.GetPathRoot(FileSettingsSave.GameInstallation);
@@ -679,7 +664,6 @@ namespace GameLauncher
             }
 
             /* Load Settings API Connection Status */
-            Task.Delay(800);
             PingServerListAPIStatus();
 
             /* Remove TracksHigh Folder and Files */

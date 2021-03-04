@@ -17,9 +17,6 @@ namespace GameLauncher.App.Classes.LauncherCore.Client
         public static String ServerIP = String.Empty;
         public static bool ForceGame = false;
 
-        //Global
-        public static bool StartMinimized = false;
-
         public UriScheme(string Parse)
         {
             if (Parse.StartsWith("nfswlaunch://"))
@@ -41,7 +38,6 @@ namespace GameLauncher.App.Classes.LauncherCore.Client
                             LoginToken = split[1];
                             ServerIP = split[2];
                             ForceGame = true;
-                            StartMinimized = true;
                         }
                         catch { }
                         break;

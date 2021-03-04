@@ -23,6 +23,18 @@ namespace GameLauncher.App.Classes
         public static int event_id = 0;
         public static int cheats_detected = 0;
         private static Thread thread = new Thread(() => { });
+        private static List<int> addresses = new List<int> {
+                    418534,  // GMZ_MULTIHACK
+                    3788216, // FAST_POWERUPS
+                    4552702, // SPEEDHACK
+                    4476396, // SMOOTH_WALLS
+                    4506534, // TANK
+                    4587060, // WALLHACK
+                    4486168, // DRIFTMOD/MULTIHACK
+                    4820249, // PURSUITBOT (NO COPS VARIATION)
+                    8972152 // PROFILEMASKER!
+                };
+
 
         //INTERNAL//
         public static bool detect_MULTIHACK     = false;
@@ -43,18 +55,6 @@ namespace GameLauncher.App.Classes
 
             thread = new Thread(() =>
             {
-                List<int> addresses = new List<int> {
-                    418534,  // GMZ_MULTIHACK
-                    3788216, // FAST_POWERUPS
-                    4552702, // SPEEDHACK
-                    4476396, // SMOOTH_WALLS
-                    4506534, // TANK
-                    4587060, // WALLHACK
-                    4486168, // DRIFTMOD/MULTIHACK
-                    4820249, // PURSUITBOT (NO COPS VARIATION)
-                    8972152 // PROFILEMASKER!
-                };
-
                 while (true)
                 {
                     foreach (var oneAddress in addresses)

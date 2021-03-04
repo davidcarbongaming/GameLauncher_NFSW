@@ -1,6 +1,7 @@
-using System.Windows.Forms;
 using GameLauncher.App.Classes.LauncherCore.Visuals;
 using GameLauncher.App.Classes.LauncherCore.Global;
+using System.Windows.Forms;
+
 
 namespace GameLauncher.App.Classes
 {
@@ -17,13 +18,16 @@ namespace GameLauncher.App.Classes
 
         private void SplashScreen_Load(object sender, System.EventArgs e)
         {
+            Clock.Start();
             FunctionStatus.CenterScreen(this);
         }
 
         private void Clock_Tick(object sender, System.EventArgs e)
         {
-            Clock.Start();
-            Application.OpenForms["SplashScreen"].Close();
+            if (FunctionStatus.ServerListStatus == "Loaded")
+            {
+                Application.OpenForms["SplashScreen"].Close();
+            }
         }
     }
 }
